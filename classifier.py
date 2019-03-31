@@ -30,7 +30,7 @@ class EmailClassifier:
                 for file in training_set:
                     with open(os.path.join(root, file)) as f:
                         email_contents = f.read().lower()
-                        new_words = re.split('[^a-zA-Z]+', email_contents)
+                        new_words = re.split('[^a-zA-Z]', email_contents)
                         classification = re.findall('|'.join(self._classes), file)[0]
                         for word in new_words:
                             parsed_training_set.append((word, classification))
