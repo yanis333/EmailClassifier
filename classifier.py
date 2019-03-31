@@ -1,26 +1,35 @@
 import os
 import re
+from filter import Filter
+from stop_word_filter import StopWordFilter
 
 class EmailClassifier:
 
     def __init__(self, classes):
         self._classes = classes
+        self._filters = []
 
     def generate_model(self, training_set_dir):
         if not hasattr(self, '_model'):
-            self._model = EmailClassifier._ModelGenerator(training_set_dir, self._classes)
+            self._model = EmailClassifier._ModelGenerator(training_set_dir, self._classes, self._filters)
             self._model.generate_model()
-    
+
+    def with_filter(self, f: Filter):
+        self._filters.append(f)
+        return self
+
     class _ModelGenerator:
 
-        def __init__(self, training_set_dir, classes):
+        def __init__(self, training_set_dir, classes, filters):
+            self._model = None
             self._classes = classes
+            self._filters = filters
+
             self._parsed_training_set = self.get_parsed_training_set(training_set_dir)
             self._vocabulary = self.get_vocabulary()
             self._word_frequencies = self.get_word_frequencies()
             self._class_frequencies = self.get_class_frequencies()
             self._smoothing_delta = 0.5
-            self._model = None
 
         def get_parsed_training_set(self, training_dir):
             # parse training set into the following format: (word, classification)
@@ -34,6 +43,14 @@ class EmailClassifier:
                         classification = re.findall('|'.join(self._classes), file)[0]
                         for word in new_words:
                             parsed_training_set.append((word, classification))
+
+            # apply any filters here
+            if len(self._filters) > 0:
+                print('length of parsed training set before filtering:', len(parsed_training_set))
+                for f in self._filters:
+                    parsed_training_set = f.apply(parsed_training_set)
+
+                print('length of parsed training after before filtering:', len(parsed_training_set))
 
             return parsed_training_set
 
@@ -140,7 +157,6 @@ class EmailClassifier:
                         f.write('{}  '.format(x))
 
                     f.write('\n')
-
 
 if __name__ == '__main__':
     classes = ['ham', 'spam']
