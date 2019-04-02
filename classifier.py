@@ -2,6 +2,7 @@ import os
 import re
 from filter import Filter
 from stop_word_filter import StopWordFilter
+import math
 
 class EmailClassifier:
 
@@ -12,11 +13,65 @@ class EmailClassifier:
     def generate_model(self, training_set_dir):
         if not hasattr(self, '_model'):
             self._model = EmailClassifier._ModelGenerator(training_set_dir, self._classes, self._filters)
-            self._model.generate_model()
+            self._modelValue = self._model.generate_model()
+    
+    def generate_testResult(self,test_dir):
+        self._test = EmailClassifier._TestGenerator(test_dir,self._classes)
+        self._test.generate_test(self._modelValue)
+        return
+
 
     def with_filter(self, f: Filter):
         self._filters.append(f)
         return self
+
+
+    class _TestGenerator:
+
+        def __init__(self,test_dir,classes):
+            self._test_dir = test_dir
+            self._classes = classes
+
+        def generate_test(self,modelValue):
+            parsed_test_result = []
+            del modelValue['']
+            for root, _, training_set in os.walk(self._test_dir, topdown=True):
+                for file in training_set:
+                    with open(os.path.join(root, file),encoding='ISO-8859-1') as f:
+                        email_contents = f.read()
+                        file_words = re.split('[^a-zA-Z]', email_contents)
+                        file_words_lower = [x.lower() for x in file_words]
+                        file_words_set = set(file_words_lower)
+                        spamTotal =0
+                        hamTotal =0
+                        classification = re.findall('|'.join(self._classes), file)[0]
+
+                        for word in file_words_set:
+                            if word in modelValue and word is not '':
+                                spamTotal = spamTotal + math.log10(modelValue[word][4])
+                                hamTotal = hamTotal + math.log10(modelValue[word][2])
+
+                        test_classification = 'ham'
+                        if spamTotal > hamTotal :
+                            test_classification = 'spam'
+
+                        right_or_wrong = 'wrong'
+                        if test_classification == classification :
+                            right_or_wrong ='right'
+                        
+                        parsed_test_result.append((file,test_classification,hamTotal,spamTotal,classification,right_or_wrong))
+            
+
+            with open('./baseline-result.txt', 'w') as f:
+                for i in range(len(parsed_test_result)):
+                    entry = parsed_test_result[i]
+                    f.write('{}  '.format(i+1))
+                    for x in entry:
+                        f.write('{}  '.format(x))
+
+                    f.write('\n')           
+            return
+
 
     class _ModelGenerator:
 
@@ -148,6 +203,11 @@ class EmailClassifier:
                 model.append(tuple(model_entry))
 
             model = sorted(model, key=lambda entry: entry[0])
+
+
+            modelValue = {}
+            for element in model:
+                modelValue[element[0]] = element
             
             with open('./model.txt', 'w') as f:
                 for i in range(len(model)):
@@ -157,8 +217,10 @@ class EmailClassifier:
                         f.write('{}  '.format(x))
 
                     f.write('\n')
+            return modelValue
 
 if __name__ == '__main__':
     classes = ['ham', 'spam']
     classifier = EmailClassifier(classes)
     classifier.generate_model('./training_set')
+    classifier.generate_testResult('./test')
