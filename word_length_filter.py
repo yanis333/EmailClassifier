@@ -1,6 +1,11 @@
 from filter import Filter
 
 class WordLengthFilter(Filter):
+
+    def __init__(self):
+        super().__init__()
+        self.name = "WordLengthFilter"
+
     def apply(self, parsed_training_set):
         print('applying', self.__class__)
         filtered = []

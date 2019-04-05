@@ -2,13 +2,14 @@ import os
 import re
 from filter import Filter
 from stop_word_filter import StopWordFilter
+from word_length_filter import WordLengthFilter
 import math
 
 class EmailClassifier:
 
-    def __init__(self, classes):
+    def __init__(self, classes,filters):
         self._classes = classes
-        self._filters = []
+        self._filters = filters
 
     def generate_model(self, training_set_dir):
         if not hasattr(self, '_model'):
@@ -16,7 +17,7 @@ class EmailClassifier:
             self._modelValue = self._model.generate_model()
     
     def generate_testResult(self,test_dir):
-        self._test = EmailClassifier._TestGenerator(test_dir,self._classes)
+        self._test = EmailClassifier._TestGenerator(test_dir,self._classes,self._filters)
         self._test.generate_test(self._modelValue)
         return
 
@@ -28,13 +29,15 @@ class EmailClassifier:
 
     class _TestGenerator:
 
-        def __init__(self,test_dir,classes):
+        def __init__(self,test_dir,classes,filters):
             self._test_dir = test_dir
             self._classes = classes
+            self._filters = filters
 
         def generate_test(self,modelValue):
             parsed_test_result = []
-            del modelValue['']
+            if '' in modelValue:
+                del modelValue['']
             for root, _, training_set in os.walk(self._test_dir, topdown=True):
                 for file in training_set:
                     with open(os.path.join(root, file),encoding='ISO-8859-1') as f:
@@ -62,7 +65,15 @@ class EmailClassifier:
                         parsed_test_result.append((file,test_classification,hamTotal,spamTotal,classification,right_or_wrong))
             
 
-            with open('./baseline-result.txt', 'w') as f:
+            typeModel = './baseline-result.txt'
+            for f in self._filters:
+                if f.name == "StopWordPath":
+                    typeModel = './stopword-result.txt'
+                if f.name == "WordLengthFilter":
+                    typeModel = './wordlength-result.txt'
+
+
+            with open(typeModel, 'w') as f:
                 for i in range(len(parsed_test_result)):
                     entry = parsed_test_result[i]
                     f.write('{}  '.format(i+1))
@@ -208,8 +219,15 @@ class EmailClassifier:
             modelValue = {}
             for element in model:
                 modelValue[element[0]] = element
-            
-            with open('./model.txt', 'w') as f:
+
+            typeModel = './model.txt'
+            for f in self._filters:
+                if f.name == "StopWordPath":
+                    typeModel = './stopword-model.txt'
+                if f.name == "WordLengthFilter":
+                    typeModel = './wordlength-model.txt'
+
+            with open(typeModel, 'w') as f:
                 for i in range(len(model)):
                     entry = model[i]
                     f.write('{}  '.format(i+1))
@@ -220,7 +238,18 @@ class EmailClassifier:
             return modelValue
 
 if __name__ == '__main__':
+    
     classes = ['ham', 'spam']
-    classifier = EmailClassifier(classes)
+    classifier = EmailClassifier(classes,[])
+    classifier.generate_model('./training_set')
+    classifier.generate_testResult('./test')
+
+    filters = WordLengthFilter()
+    classifier = EmailClassifier(classes,[filters])
+    classifier.generate_model('./training_set')
+    classifier.generate_testResult('./test')
+
+    filters = StopWordFilter('./english_stop_words.txt')
+    classifier = EmailClassifier(classes,[filters])
     classifier.generate_model('./training_set')
     classifier.generate_testResult('./test')
