@@ -2,8 +2,11 @@ from filter import Filter
 
 class StopWordFilter(Filter):
 
+    
+
     def __init__(self, stop_words_path):
         super().__init__()
+        self.name = "StopWordPath"
         self._stop_words = self._get_stop_words(stop_words_path)
 
     def apply(self, parsed_training_set):
