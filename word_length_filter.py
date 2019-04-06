@@ -11,7 +11,7 @@ class WordLengthFilter(Filter):
         filtered = []
         for entry in parsed_training_set:
             word, _ = entry
-            if len(word)>2 and len(word) < 9 :
+            if len(word) > 2 and len(word) < 9:
                 filtered.append(entry)
 
         return filtered

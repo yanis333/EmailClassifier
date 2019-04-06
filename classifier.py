@@ -1,24 +1,25 @@
 import os
+import sys
 import re
+import math
 from filter import Filter
 from stop_word_filter import StopWordFilter
 from word_length_filter import WordLengthFilter
-import math
 
 class EmailClassifier:
 
-    def __init__(self, classes,filters):
+    def __init__(self, classes, filters=[]):
         self._classes = classes
         self._filters = filters
 
     def generate_model(self, training_set_dir):
         if not hasattr(self, '_model'):
             self._model = EmailClassifier._ModelGenerator(training_set_dir, self._classes, self._filters)
-            self._modelValue = self._model.generate_model()
+            self._model_value = self._model.generate_model()
     
-    def generate_testResult(self,test_dir):
-        self._test = EmailClassifier._TestGenerator(test_dir,self._classes,self._filters)
-        self._test.generate_test(self._modelValue)
+    def generate_test_result(self,test_dir):
+        self._test = EmailClassifier._TestGenerator(test_dir, self._classes, self._filters)
+        self._test.generate_test(self._model_value)
         return
 
 
@@ -29,58 +30,60 @@ class EmailClassifier:
 
     class _TestGenerator:
 
-        def __init__(self,test_dir,classes,filters):
+        def __init__(self, test_dir, classes, filters):
             self._test_dir = test_dir
             self._classes = classes
             self._filters = filters
 
-        def generate_test(self,modelValue):
+        def generate_test(self, model_value):
             parsed_test_result = []
-            if '' in modelValue:
-                del modelValue['']
+            if '' in model_value:
+                del model_value['']
+
             for root, _, training_set in os.walk(self._test_dir, topdown=True):
                 for file in training_set:
-                    with open(os.path.join(root, file),encoding='ISO-8859-1') as f:
+                    with open(os.path.join(root, file), encoding='ISO-8859-1') as f:
                         email_contents = f.read()
                         file_words = re.split('[^a-zA-Z]', email_contents)
                         file_words_lower = [x.lower() for x in file_words]
                         file_words_set = set(file_words_lower)
-                        spamTotal =0
-                        hamTotal =0
+                        spam_total = 0
+                        ham_total = 0
                         classification = re.findall('|'.join(self._classes), file)[0]
 
                         for word in file_words_set:
-                            if word in modelValue and word is not '':
-                                spamTotal = spamTotal + math.log10(modelValue[word][4])
-                                hamTotal = hamTotal + math.log10(modelValue[word][2])
+                            if word in model_value and word is not '':
+                                spam_total = spam_total + math.log10(model_value[word][4])
+                                ham_total = ham_total + math.log10(model_value[word][2])
 
                         test_classification = 'ham'
-                        if spamTotal > hamTotal :
+                        if spam_total > ham_total :
                             test_classification = 'spam'
 
                         right_or_wrong = 'wrong'
                         if test_classification == classification :
                             right_or_wrong ='right'
                         
-                        parsed_test_result.append((file,test_classification,hamTotal,spamTotal,classification,right_or_wrong))
+                        parsed_test_result.append((file, test_classification, ham_total, spam_total, classification, right_or_wrong))
             
 
-            typeModel = './baseline-result.txt'
+            type_model = './baseline-result.txt'
             for f in self._filters:
-                if f.name == "StopWordPath":
-                    typeModel = './stopword-result.txt'
-                if f.name == "WordLengthFilter":
-                    typeModel = './wordlength-result.txt'
+                if f.name == 'StopWordPath':
+                    type_model = './stopword-result.txt'
+                if f.name == 'WordLengthFilter':
+                    type_model = './wordlength-result.txt'
 
 
-            with open(typeModel, 'w') as f:
+            with open(type_model, 'w') as f:
                 for i in range(len(parsed_test_result)):
                     entry = parsed_test_result[i]
                     f.write('{}  '.format(i+1))
                     for x in entry:
                         f.write('{}  '.format(x))
 
-                    f.write('\n')           
+                    f.write('\n')     
+      
             return
 
 
@@ -116,7 +119,7 @@ class EmailClassifier:
                 for f in self._filters:
                     parsed_training_set = f.apply(parsed_training_set)
 
-                print('length of parsed training after before filtering:', len(parsed_training_set))
+                print('length of parsed training after before filtering:', len(parsed_training_set), '\n')
 
             return parsed_training_set
 
@@ -216,18 +219,18 @@ class EmailClassifier:
             model = sorted(model, key=lambda entry: entry[0])
 
 
-            modelValue = {}
+            model_value = {}
             for element in model:
-                modelValue[element[0]] = element
+                model_value[element[0]] = element
 
-            typeModel = './model.txt'
+            type_model = './model.txt'
             for f in self._filters:
-                if f.name == "StopWordPath":
-                    typeModel = './stopword-model.txt'
-                if f.name == "WordLengthFilter":
-                    typeModel = './wordlength-model.txt'
+                if f.name == 'StopWordPath':
+                    type_model = './stopword-model.txt'
+                if f.name == 'WordLengthFilter':
+                    type_model = './wordlength-model.txt'
 
-            with open(typeModel, 'w') as f:
+            with open(type_model, 'w') as f:
                 for i in range(len(model)):
                     entry = model[i]
                     f.write('{}  '.format(i+1))
@@ -235,21 +238,21 @@ class EmailClassifier:
                         f.write('{}  '.format(x))
 
                     f.write('\n')
-            return modelValue
+            return model_value
 
 if __name__ == '__main__':
+    TRAINING_SET_DIR = sys.argv[1]
+    TEST_SET_DIR = sys.argv[2]
     
     classes = ['ham', 'spam']
-    classifier = EmailClassifier(classes,[])
-    classifier.generate_model('./training_set')
-    classifier.generate_testResult('./test')
+    classifier1 = EmailClassifier(classes)
+    classifier1.generate_model(TRAINING_SET_DIR)
+    classifier1.generate_test_result(TEST_SET_DIR)
 
-    filters = WordLengthFilter()
-    classifier = EmailClassifier(classes,[filters])
-    classifier.generate_model('./training_set')
-    classifier.generate_testResult('./test')
+    classifier2 = EmailClassifier(classes, [WordLengthFilter()])
+    classifier2.generate_model(TRAINING_SET_DIR)
+    classifier2.generate_test_result(TEST_SET_DIR)
 
-    filters = StopWordFilter('./english_stop_words.txt')
-    classifier = EmailClassifier(classes,[filters])
-    classifier.generate_model('./training_set')
-    classifier.generate_testResult('./test')
+    classifier3 = EmailClassifier(classes, [StopWordFilter('./english_stop_words.txt')])
+    classifier3.generate_model(TRAINING_SET_DIR)
+    classifier3.generate_test_result(TEST_SET_DIR)
