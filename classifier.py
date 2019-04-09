@@ -41,7 +41,23 @@ class EmailClassifier:
                 del model_value['']
 
             for root, _, training_set in os.walk(self._test_dir, topdown=True):
+
+                # For Accuracy    
+                total_of_right_classification =0
+                total_file =0
+
+                # For recall
+                recall_ham_model = 0
+                recall_spam_model = 0
+                ham_match =0
+                spam_match =0
+
+                #For precision
+                precision_ham_result=0
+                precision_spam_result=0
+
                 for file in training_set:
+                    total_file = total_file + 1
                     with open(os.path.join(root, file), encoding='ISO-8859-1') as f:
                         email_contents = f.read()
                         file_words = re.split('[^a-zA-Z]', email_contents)
@@ -63,16 +79,43 @@ class EmailClassifier:
                         right_or_wrong = 'wrong'
                         if test_classification == classification :
                             right_or_wrong ='right'
+                            total_of_right_classification = total_of_right_classification + 1
+
+                        if classification == 'ham':
+                            recall_ham_model = recall_ham_model + 1
+                        if classification == 'spam':
+                            recall_spam_model = recall_spam_model + 1
+
+                        if test_classification == 'ham' and classification == 'ham':
+                            ham_match = ham_match + 1
+                        if test_classification == 'spam' and classification == 'spam':
+                            spam_match = spam_match + 1
+
+                        if test_classification == 'ham':
+                            precision_ham_result = precision_ham_result + 1
+                        if test_classification == 'spam':
+                            precision_spam_result = precision_spam_result + 1
                         
                         parsed_test_result.append((file, test_classification, ham_total, spam_total, classification, right_or_wrong))
             
+            precision_ham = ham_match/precision_ham_result
+            recall_ham = ham_match/recall_ham_model
 
+            precision_spam = spam_match/precision_spam_result
+            recall_spam = spam_match/recall_spam_model
+
+            f1_measured_ham = (2 * precision_ham * recall_ham)/(precision_ham + recall_ham)
+            f1_measured_spam = (2 * precision_spam * recall_spam)/(precision_spam + recall_spam)
+
+            type_name = 'BaseLine'
             type_model = './baseline-result.txt'
             for f in self._filters:
                 if f.name == 'StopWordPath':
                     type_model = './stopword-result.txt'
+                    type_name = 'StopWord'
                 if f.name == 'WordLengthFilter':
                     type_model = './wordlength-result.txt'
+                    type_name = 'WordLength'
 
 
             with open(type_model, 'w') as f:
@@ -83,7 +126,46 @@ class EmailClassifier:
                         f.write('{}  '.format(x))
 
                     f.write('\n')     
-      
+            
+            with open('./analysis.txt', 'a') as f:
+                f.write('Type of the test : '+type_name)
+                f.write('\n')
+                f.write('# of files : '+ str(total_file))
+                f.write('\n')
+                f.write('# of right classification : '+ str(total_of_right_classification))
+                f.write('\n')
+                f.write('Accuracy : '+ str(total_of_right_classification/total_file))
+                f.write('\n')
+                f.write('# of files actually ham : ' + str(recall_ham_model))
+                f.write('\n')
+                f.write('# of files right classified as ham : ' + str(ham_match))
+                f.write('\n')
+                f.write('# of files actually spam : ' + str(recall_spam_model))
+                f.write('\n')
+                f.write('# of files right classified as spam : ' + str(spam_match))
+                f.write('\n')
+                f.write('Recall Ham : '+ str(recall_ham))
+                f.write('\n')
+                f.write('Recall Spam : '+ str(recall_spam))
+                f.write('\n')
+                f.write('# of files classified ham : ' + str(precision_ham_result))
+                f.write('\n')
+                f.write('# of files right classified as ham : ' + str(ham_match))
+                f.write('\n')
+                f.write('# of files classified spam : ' + str(precision_spam_result))
+                f.write('\n')
+                f.write('# of files right classified as spam : ' + str(spam_match))
+                f.write('\n')
+                f.write('Precision Ham : '+ str(precision_ham))
+                f.write('\n')
+                f.write('Precision Spam : '+ str(precision_spam))
+                f.write('\n')
+                f.write('F1 measured Ham : '+ str(f1_measured_ham))
+                f.write('\n')
+                f.write('F1 measured Spam : '+ str(f1_measured_spam))
+                f.write('\n')
+                f.write('\n')
+       
             return
 
 
@@ -241,8 +323,11 @@ class EmailClassifier:
             return model_value
 
 if __name__ == '__main__':
-    TRAINING_SET_DIR = sys.argv[1]
-    TEST_SET_DIR = sys.argv[2]
+    TRAINING_SET_DIR = './training_set'
+    TEST_SET_DIR = './test'
+
+    #TRAINING_SET_DIR = sys.argv[1]
+    #TEST_SET_DIR = sys.argv[2]
     
     classes = ['ham', 'spam']
     classifier1 = EmailClassifier(classes)
