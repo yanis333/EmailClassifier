@@ -1,0 +1,27 @@
+Type of the test : BaseLine
+Accuracy : 0.9275
+Recall Ham : 0.995
+Recall Spam : 0.86
+Precision Ham : 0.8766519823788547
+Precision Spam : 0.9942196531791907
+F1 Ham : 0.9320843091334895
+F1 Spam : 0.9222520107238604
+
+Type of the test : WordLength
+Accuracy : 0.945
+Recall Ham : 0.9825
+Recall Spam : 0.9075
+Precision Ham : 0.913953488372093
+Precision Spam : 0.981081081081081
+F1 Ham : 0.9469879518072288
+F1 Spam : 0.9428571428571428
+
+Type of the test : StopWord
+Accuracy : 0.9375
+Recall Ham : 0.9825
+Recall Spam : 0.8925
+Precision Ham : 0.9013761467889908
+Precision Spam : 0.9807692307692307
+F1 Ham : 0.9401913875598086
+F1 Spam : 0.9345549738219895
+
