@@ -1,27 +1,57 @@
 Type of the test : BaseLine
+# of files : 800
+# of right classification : 742
 Accuracy : 0.9275
+# of files actually ham : 400
+# of files right classified as ham : 398
+# of files actually spam : 400
+# of files right classified as spam : 344
 Recall Ham : 0.995
 Recall Spam : 0.86
+# of files classified ham : 454
+# of files right classified as ham : 398
+# of files classified spam : 346
+# of files right classified as spam : 344
 Precision Ham : 0.8766519823788547
 Precision Spam : 0.9942196531791907
-F1 Ham : 0.9320843091334895
-F1 Spam : 0.9222520107238604
+F1 measured Ham : 0.9320843091334895
+F1 measured Spam : 0.9222520107238604
 
 Type of the test : WordLength
+# of files : 800
+# of right classification : 756
 Accuracy : 0.945
+# of files actually ham : 400
+# of files right classified as ham : 393
+# of files actually spam : 400
+# of files right classified as spam : 363
 Recall Ham : 0.9825
 Recall Spam : 0.9075
+# of files classified ham : 430
+# of files right classified as ham : 393
+# of files classified spam : 370
+# of files right classified as spam : 363
 Precision Ham : 0.913953488372093
 Precision Spam : 0.981081081081081
-F1 Ham : 0.9469879518072288
-F1 Spam : 0.9428571428571428
+F1 measured Ham : 0.9469879518072288
+F1 measured Spam : 0.9428571428571428
 
 Type of the test : StopWord
+# of files : 800
+# of right classification : 750
 Accuracy : 0.9375
+# of files actually ham : 400
+# of files right classified as ham : 393
+# of files actually spam : 400
+# of files right classified as spam : 357
 Recall Ham : 0.9825
 Recall Spam : 0.8925
+# of files classified ham : 436
+# of files right classified as ham : 393
+# of files classified spam : 364
+# of files right classified as spam : 357
 Precision Ham : 0.9013761467889908
 Precision Spam : 0.9807692307692307
-F1 Ham : 0.9401913875598086
-F1 Spam : 0.9345549738219895
+F1 measured Ham : 0.9401913875598086
+F1 measured Spam : 0.9345549738219895
 
